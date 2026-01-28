@@ -34,17 +34,17 @@ SharkAI augments analysts, it does not replace them.
 High-Level Architecture
 
 Wireshark UI
-  |
-  |-- SharkAI Plugin (C / Qt)
-  |     |-- Packet selection & extraction
-  |     |-- JSON payload construction
-  |     |-- UI dialogs & configuration
-  |     |-- Transport (HTTP / HTTPS)
-  |
-  |-- LLM Backend
-        |-- OpenAI Responses API
-        |-- Ollama
-        |-- Other compatible endpoints
+|
+|-- SharkAI Plugin (C / Qt)
+| |-- Packet selection & extraction
+| |-- JSON payload construction
+| |-- UI dialogs & configuration
+| |-- Transport (HTTP / HTTPS)
+|
+|-- LLM Backend
+|-- OpenAI Responses API
+|-- Ollama
+|-- Other compatible endpoints
 
 ---------------------------------------------------------------------
 
