@@ -197,14 +197,14 @@ Optional
 Building SharkAI
 
 Typical build flow:
-
+```
   cd sharkai
   ./build.sh
-
+```
 NOTE: This will build the .so plugin and install into:
-
+```
   /usr/local/lib/wireshark/plugins/4.x/epan/
-
+```
 
 Start Wireshark and verify SharkAI appears in the plugin list (Help -> About Wireshark -> Plugins).
 Then check 'Tools' menu option; SharkAI plugin should be a sub-menu option
