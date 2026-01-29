@@ -73,6 +73,76 @@ Extensible
 
 ---------------------------------------------------------------------
 
+LLM Backend Parsing
+
+SharkAI supports multiple LLM backends with different response schemas and transport behaviors.
+The parser is intentionally strict and only extracts textual model output from known, well-defined
+JSON structures.
+
+This section documents the exact JSON formats currently supported.
+
+HTTPS is used for cloud providers (OpenAI, xAI/Grok, etc.). Responses are read fully, then parsed
+as JSON.
+
+#### 1. OpenAI Responses API (`/v1/responses`)
+
+SharkAI supports the modern OpenAI Responses API schema.
+
+```
+Expected structure:
+
+    {
+      "output": [
+        {
+          "type": "message",
+          "content": [
+            {
+              "type": "output_text",
+              "text": "Model response text here"
+            }
+          ]
+        }
+      ]
+    }
+```
+
+---
+
+#### 2. Chat Completions–Style APIs (`/v1/chat/completions`, Grok, etc.)
+
+SharkAI also supports legacy and compatible chat-completions schemas.
+
+```
+Expected structure:
+
+    {
+      "choices": [
+        {
+          "message": {
+            "role": "assistant",
+            "content": "Model response text here"
+          }
+        }
+      ]
+    }
+```
+
+---
+
+#### 3. Streaming NDJSON (Ollama-style)
+
+SharkAI supports HTTP streaming (chunked) or single-shot responses.
+
+```
+Expected per-line JSON objects:
+
+    { "response": "partial text", "done": false }
+    { "response": " more text", "done": false }
+    { "done": true }
+```
+
+---------------------------------------------------------------------
+
 Features
 
 Packet-Scoped AI Queries
