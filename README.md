@@ -175,6 +175,7 @@ Configuration File
 - Configuration file allows users to override default models
 - Configuration lives at ~/.config/wireshark/sharkai/models.conf
 - json format
+- see 'Configuration' below for information on how to modify the config file
 
 ---------------------------------------------------------------------
 
@@ -222,6 +223,37 @@ SharkAI includes a native configuration dialog:
 - Use HTTPS (override)
 
 All values are applied at runtime — no rebuild required.
+
+You can also modify the configuration file to apply custom model information:
+
+```
+[
+  {
+    "name":"mistral",
+    "domain":"localhost",
+    "requires_api_key":false,
+    "api_endpoint":"/api/generate",
+    "uses_https":false,
+    "payload_type":0
+  },
+  {
+    "name":"grok-code-fast-1",
+    "domain":"api.x.ai",
+    "requires_api_key":true,
+    "api_endpoint":"/v1/chat/completions",
+    "uses_https":true,
+    "payload_type":1
+  },
+  {
+    "name":"gpt-5.2-pro",
+    "domain":"api.openai.com",
+    "requires_api_key":true,
+    "api_endpoint":"/v1/responses",
+    "uses_https":true,
+    "payload_type":2
+  }
+]
+```
 
 ---------------------------------------------------------------------
 
