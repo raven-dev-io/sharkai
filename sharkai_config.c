@@ -13,6 +13,7 @@
 static sharkai_model_info_t *g_runtime_models = NULL;  // optional override
 static size_t g_runtime_models_count = 0;
 static int g_models_initialized = 0;
+static bool g_config_hydrated_from_model = false;
 
 
 static const sharkai_model_info_t sharkai_models[] = {
@@ -54,6 +55,45 @@ static sharkai_config_t g_sharkai_config = {
     .api_endpoint = "/api/generate",
     .uses_https = false
 };
+
+
+static const sharkai_model_info_t *sharkai_models_active(void)
+{
+    return g_runtime_models ? g_runtime_models : sharkai_models;
+}
+
+
+static void sharkai_apply_model_defaults(void)
+{
+    const sharkai_model_info_t *models = sharkai_models_active();
+    if (!models || !models[0].name)
+        return;
+
+    /* Use FIRST active model as baseline */
+    const sharkai_model_info_t *m = &models[0];
+
+    strncpy(g_sharkai_config.model, m->name,
+            sizeof(g_sharkai_config.model) - 1);
+    g_sharkai_config.model[sizeof(g_sharkai_config.model) - 1] = '\0';
+
+    if (m->domain && m->domain[0]) {
+        strncpy(g_sharkai_config.host, m->domain,
+                sizeof(g_sharkai_config.host) - 1);
+        g_sharkai_config.host[sizeof(g_sharkai_config.host) - 1] = '\0';
+    }
+
+    if (m->api_endpoint && m->api_endpoint[0]) {
+        strncpy(g_sharkai_config.api_endpoint, m->api_endpoint,
+                sizeof(g_sharkai_config.api_endpoint) - 1);
+        g_sharkai_config.api_endpoint[
+            sizeof(g_sharkai_config.api_endpoint) - 1] = '\0';
+    }
+
+    g_sharkai_config.uses_https = m->uses_https;
+
+    if (!m->requires_api_key)
+        g_sharkai_config.api_key[0] = '\0';
+}
 
 
 static void sharkai_get_models_conf_path(char *dir, size_t dir_sz,
@@ -251,7 +291,7 @@ static void sharkai_load_models_from_json(json_object *arr)
     g_runtime_models_count = valid;
 }
 
-static void sharkai_models_init_once(void)
+void sharkai_models_init_once(void)
 {
     if (g_models_initialized)
         return;
@@ -329,15 +369,15 @@ static void sharkai_models_init_once(void)
 
     if (arr && json_object_is_type(arr, json_type_array)) {
         sharkai_load_models_from_json(arr);
+
+        /* This will ensure that our config state is set */
+        if (g_runtime_models) {
+            sharkai_apply_model_defaults();
+            g_config_hydrated_from_model = true;
+        }
     }
 
     json_object_put(root);
-}
-
-
-static const sharkai_model_info_t *sharkai_models_active(void)
-{
-    return g_runtime_models ? g_runtime_models : sharkai_models;
 }
 
 

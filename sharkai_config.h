@@ -41,6 +41,7 @@ void sharkai_set_config(const char *host,
                         const char *api_key,
                         const char *api_endpoint,
                         bool https_override);
+void sharkai_models_init_once(void);
 
 #ifdef __cplusplus
 }

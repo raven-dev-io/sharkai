@@ -14,6 +14,7 @@
 #include <json-c/json.h>
 
 #include "sharkai.h"
+#include "sharkai_config.h"
 #include "sharkai_dialog.h"
 #include "sharkai_qt_bridge.h"
 
@@ -48,6 +49,31 @@ typedef struct {
 } sharkai_tree_walk_ctx_t;
 
 static void
+sharkai_json_add(json_object *obj, const char *key, json_object *val)
+{
+    json_object *existing;
+
+    if (!json_object_object_get_ex(obj, key, &existing)) {
+        json_object_object_add(obj, key, val);
+        return;
+    }
+
+    /* If already an array, append */
+    if (json_object_is_type(existing, json_type_array)) {
+        json_object_array_add(existing, val);
+        return;
+    }
+
+    /* Promote scalar → array */
+    json_object *arr = json_object_new_array();
+    json_object_array_add(arr, json_object_get(existing)); /* steal ref */
+    json_object_array_add(arr, val);
+
+    json_object_object_del(obj, key);
+    json_object_object_add(obj, key, arr);
+}
+
+static void
 sharkai_walk_node(proto_node *node, gpointer user_data)
 {
     sharkai_tree_walk_ctx_t *ctx = (sharkai_tree_walk_ctx_t *)user_data;
@@ -58,11 +84,13 @@ sharkai_walk_node(proto_node *node, gpointer user_data)
 
     const char *abbrev = pi->finfo->hfinfo->abbrev;
 
+    //g_print("%s\n", abbrev);
+
     /* ===================== HARD SUPPRESSION ===================== */
 
     if (abbrev &&
         (
-            strcmp(abbrev, "data") == 0 ||
+            //strcmp(abbrev, "data") == 0 ||
             strcmp(abbrev, "frame") == 0 ||
             strcmp(abbrev, "http.file_data") == 0 ||
             strcmp(abbrev, "tcp.segment_data") == 0 ||
@@ -184,7 +212,7 @@ sharkai_walk_node(proto_node *node, gpointer user_data)
                 val++;
 
             if (*val) {
-                json_object_object_add(
+                sharkai_json_add(
                     ctx->out,
                     abbrev,
                     json_object_new_string(val)
@@ -229,9 +257,9 @@ static json_object * sharkai_build_packet_json(proto_tree *tree, int max_depth)
     proto_tree_children_foreach(tree, sharkai_walk_node, &w);
 
     /* DEBUG */
-    // const char *json_str =
-    //    json_object_to_json_string_ext(packet_json, JSON_C_TO_STRING_PRETTY);
-    // g_message("SharkAI packet JSON:\n%s", json_str);
+    const char *json_str =
+        json_object_to_json_string_ext(packet_json, JSON_C_TO_STRING_PRETTY);
+    g_message("SharkAI packet JSON:\n%s", json_str);
 
     return packet_json; /* caller owns */
 }
@@ -426,7 +454,7 @@ static void sharkai_summarize_cb(
         return;
     }
 
-    const size_t MAX_FRAMES = 50;
+    const size_t MAX_FRAMES = 10000;
     if (count > MAX_FRAMES) {
         g_warning("SharkAI: too many frames selected (%zu)", count);
         g_free(frames);
@@ -469,6 +497,8 @@ static void sharkai_summarize_cb(
 WS_DLL_PUBLIC void plugin_register(void)
 {
     //g_message("SharkAI: plugin_register() called");
+
+    sharkai_models_init_once();
 
     ext_menu_t *menu = ext_menubar_register_menu(
         0,
